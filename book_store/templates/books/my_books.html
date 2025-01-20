@@ -1,0 +1,416 @@
+{% extends 'base/base.html' %}
+
+{% block title %}My Books{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>My Books</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="btn-group">
+                <a href="{% url 'books:add_book' %}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Add New Book
+                </a>
+                <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-bs-toggle="dropdown">
+                    <span class="visually-hidden">Toggle Dropdown</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li>
+                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#importModal">
+                            <i class="bi bi-file-earmark-arrow-up"></i> Import Books
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'books:export_books' %}">
+                            <i class="bi bi-file-earmark-arrow-down"></i> Export Books
+                        </a>
+                    </li>
+                    <li>
+                        <a class="dropdown-item" href="{% url 'books:download_template' %}">
+                            <i class="bi bi-file-earmark-text"></i> Download Template
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            <a href="{% url 'books:analytics' %}" class="btn btn-outline-primary ms-2">
+                <i class="bi bi-graph-up"></i> Analytics
+            </a>
+        </div>
+    </div>
+
+    <!-- Bulk Actions -->
+    <div class="bulk-actions mb-3" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="selected-count">0 books selected</span>
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                            Bulk Actions
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item bulk-action" href="#" data-action="change_status" data-status="published">
+                                    <i class="bi bi-check-circle"></i> Mark as Published
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item bulk-action" href="#" data-action="change_status" data-status="draft">
+                                    <i class="bi bi-pencil"></i> Mark as Draft
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item bulk-action" href="#" data-action="change_status" data-status="archived">
+                                    <i class="bi bi-archive"></i> Archive
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger bulk-action" href="#" data-action="delete">
+                                    <i class="bi bi-trash"></i> Delete Selected
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Books</h5>
+                    <p class="card-text display-6">{{ books.count }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Published</h5>
+                    <p class="card-text display-6">{{ books|dictsort:"status"|dictsortreversed:"status"|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-dark">
+                <div class="card-body">
+                    <h5 class="card-title">Drafts</h5>
+                    <p class="card-text display-6">{{ books|dictsort:"status"|length }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-secondary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Sales</h5>
+                    <p class="card-text display-6">{{ books|sum:"sale_count" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link {% if not request.GET.status %}active{% endif %}" href="{% url 'books:my_books' %}">
+                All Books
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'published' %}active{% endif %}" 
+               href="{% url 'books:my_books' %}?status=published">
+                Published
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'draft' %}active{% endif %}"
+               href="{% url 'books:my_books' %}?status=draft">
+                Drafts
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.GET.status == 'archived' %}active{% endif %}"
+               href="{% url 'books:my_books' %}?status=archived">
+                Archived
+            </a>
+        </li>
+    </ul>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {% for book in books %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="form-check position-absolute p-0" style="top: 10px; left: 10px;">
+                    <input type="checkbox" class="form-check-input book-checkbox" value="{{ book.id }}" 
+                           style="transform: scale(1.2);">
+                </div>
+                {% if book.cover_image %}
+                <img src="{{ book.cover_image.url }}" class="card-img-top" alt="{{ book.title }}" 
+                     style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title mb-0">{{ book.title }}</h5>
+                        <span class="badge {% if book.status == 'published' %}bg-success{% elif book.status == 'draft' %}bg-warning text-dark{% else %}bg-secondary{% endif %}">
+                            {{ book.status|title }}
+                        </span>
+                    </div>
+                    <p class="card-text text-muted">by {{ book.author }}</p>
+                    
+                    <!-- Book Statistics -->
+                    <div class="row text-center mb-3">
+                        <div class="col">
+                            <small class="text-muted d-block">Views</small>
+                            <strong>{{ book.view_count }}</strong>
+                        </div>
+                        <div class="col">
+                            <small class="text-muted d-block">Sales</small>
+                            <strong>{{ book.sale_count }}</strong>
+                        </div>
+                        <div class="col">
+                            <small class="text-muted d-block">Rating</small>
+                            <strong>{{ book.average_rating|floatformat:1 }}</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="h5 mb-0">${{ book.price }}</span>
+                        <span class="badge {% if book.stock > 0 %}bg-success{% else %}bg-danger{% endif %}">
+                            Stock: {{ book.stock }}
+                        </span>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'books:book_detail' book.slug %}" class="btn btn-outline-primary">
+                            <i class="bi bi-eye"></i> View Details
+                        </a>
+                        <a href="{% url 'books:edit_book' book.pk %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-pencil"></i> Edit
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" 
+                                data-bs-target="#deleteModal{{ book.pk }}">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Confirmation Modal -->
+        <div class="modal fade" id="deleteModal{{ book.pk }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Delete Book</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>Are you sure you want to delete "{{ book.title }}"?</p>
+                        <p class="text-muted small">This action cannot be undone.</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <form method="post" action="{% url 'books:delete_book' book.pk %}" class="d-inline">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="alert alert-info">
+                You haven't added any books yet. 
+                <a href="{% url 'books:add_book' %}" class="alert-link">Add your first book</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% if books.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if books.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ books.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    Previous
+                </a>
+            </li>
+            {% endif %}
+
+            {% for num in books.paginator.page_range %}
+            <li class="page-item {% if books.number == num %}active{% endif %}">
+                <a class="page-link" href="?page={{ num }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    {{ num }}
+                </a>
+            </li>
+            {% endfor %}
+
+            {% if books.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ books.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">
+                    Next
+                </a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    <!-- Import Modal -->
+    <div class="modal fade" id="importModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Import Books</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="importForm" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label for="csvFile" class="form-label">Choose CSV File</label>
+                            <input type="file" class="form-control" id="csvFile" accept=".csv" required>
+                        </div>
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i> 
+                            Need help? <a href="{% url 'books:download_template' %}">Download the template</a> to see the required format.
+                        </div>
+                    </form>
+                    <div id="importResults" style="display: none;">
+                        <div class="alert" role="alert"></div>
+                        <div class="import-errors small text-danger"></div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" id="importButton">
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                        Import
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    // Bulk selection handling
+    const bulkActions = document.querySelector('.bulk-actions');
+    const selectedCount = document.querySelector('.selected-count');
+    const checkboxes = document.querySelectorAll('.book-checkbox');
+    
+    function updateBulkActionsVisibility() {
+        const checkedBoxes = document.querySelectorAll('.book-checkbox:checked');
+        bulkActions.style.display = checkedBoxes.length > 0 ? 'block' : 'none';
+        selectedCount.textContent = `${checkedBoxes.length} books selected`;
+    }
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActionsVisibility);
+    });
+
+    // Bulk actions handling
+    document.querySelectorAll('.bulk-action').forEach(action => {
+        action.addEventListener('click', async (e) => {
+            e.preventDefault();
+            
+            const action = e.target.dataset.action;
+            const status = e.target.dataset.status;
+            const selectedBooks = Array.from(document.querySelectorAll('.book-checkbox:checked')).map(cb => cb.value);
+            
+            if (!selectedBooks.length) return;
+            
+            if (action === 'delete' && !confirm('Are you sure you want to delete the selected books?')) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('{% url "books:bulk_action" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-CSRFToken': '{{ csrf_token }}'
+                    },
+                    body: new URLSearchParams({
+                        action: action,
+                        'book_ids[]': selectedBooks,
+                        status: status
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.error || 'An error occurred');
+                }
+            } catch (error) {
+                alert('An error occurred');
+            }
+        });
+    });
+
+    // Import handling
+    const importForm = document.getElementById('importForm');
+    const importButton = document.getElementById('importButton');
+    const importResults = document.getElementById('importResults');
+    const importAlert = importResults.querySelector('.alert');
+    const importErrors = importResults.querySelector('.import-errors');
+    
+    importButton.addEventListener('click', async () => {
+        const fileInput = document.getElementById('csvFile');
+        if (!fileInput.files.length) return;
+        
+        const formData = new FormData();
+        formData.append('file', fileInput.files[0]);
+        
+        importButton.disabled = true;
+        importButton.querySelector('.spinner-border').classList.remove('d-none');
+        importResults.style.display = 'none';
+        
+        try {
+            const response = await fetch('{% url "books:import_books" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            importResults.style.display = 'block';
+            if (data.success) {
+                importAlert.className = 'alert alert-success';
+                importAlert.textContent = data.message;
+                if (data.errors.length) {
+                    importErrors.innerHTML = data.errors.join('<br>');
+                } else {
+                    importErrors.innerHTML = '';
+                }
+                setTimeout(() => location.reload(), 2000);
+            } else {
+                importAlert.className = 'alert alert-danger';
+                importAlert.textContent = data.error;
+                importErrors.innerHTML = '';
+            }
+        } catch (error) {
+            importResults.style.display = 'block';
+            importAlert.className = 'alert alert-danger';
+            importAlert.textContent = 'An error occurred while importing books';
+        } finally {
+            importButton.disabled = false;
+            importButton.querySelector('.spinner-border').classList.add('d-none');
+        }
+    });
+</script>
+{% endblock %} 

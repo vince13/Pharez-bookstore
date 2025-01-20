@@ -1,0 +1,16 @@
+<!-- accounts/templates/accounts/address_list.html -->
+{% extends 'base/base.html' %}
+
+{% block title %}Your Addresses{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2>Your Addresses</h2>
+    <a href="{% url 'add_address' %}" class="btn btn-primary">Add Address</a>
+    <ul>
+        {% for address in addresses %}
+            <li>{{ address }}</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

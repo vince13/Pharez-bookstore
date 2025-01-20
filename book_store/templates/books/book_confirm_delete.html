@@ -1,0 +1,27 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Delete Book{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Delete Book</h3>
+                </div>
+                <div class="card-body">
+                    <p class="text-center">Are you sure you want to delete "{{ book.title }}"?</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-danger">Delete</button>
+                            <a href="{% url 'books:book_detail' book.pk %}" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

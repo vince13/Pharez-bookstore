@@ -1,0 +1,16 @@
+.env
+env
+env/
+.ENV
+.ENV/
+.idea
+venv
+.venv
+venv/
+.venv/
+build_note
+build_note.txt
+file_structure
+file_structure.txt
+dating_site_note.py
+dating_site_note
